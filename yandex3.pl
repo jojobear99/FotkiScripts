@@ -10,9 +10,6 @@ Usage:
     arg1: album url
     arg2: number of photos in album (get from the album's webpage)
     arg3: subfolder to create/use to store pictures (optional)
-    
-This script created by Jessica Brown
-
 =cut
 
 use warnings;
@@ -30,6 +27,7 @@ BEGIN {
 # --------------------------------------------------------------------
 sub main {
 	use constant NUM_PICTURES_PER_ALBUM_PAGE => 20;
+	my $clobber = 0; # set this to true to overwrite existing files when encountered
     my $album_url = $ARGV[0] || die "use: $0 album_url\n";
     my $numimages = $ARGV[1] || 1;
     my $numpages = POSIX::ceil($numimages / NUM_PICTURES_PER_ALBUM_PAGE);
@@ -76,10 +74,17 @@ sub main {
 		        # Thank you to https://gist.github.com/msoap/4398036 for this technique
 		        $photourl =~ s/_[a-z]+$/_orig/i; 
 		          
-		        my $photofilename = $img->attr('alt'); # use alt tag as filename
-		        
-		    	print "saving $photourl as $photofilename \n";
-		        mirror($photourl, $dirname . $photofilename);
+		        my $photofilename = $img->attr('alt'); # use alt tag as filename   
+                my $photofileincpath = $dirname . $photofilename;
+                my $fileDoesNotExist = (! -e $photofileincpath);
+
+                if ($fileDoesNotExist || $clobber) {
+                    print "saving $photourl as $photofilename \n";
+                    mirror($photourl, $photofileincpath);
+                } 
+                else {
+                    print "Skipping $photofilename (file exists) URL: $photourl \n";
+                }
 		    }
         }
 
